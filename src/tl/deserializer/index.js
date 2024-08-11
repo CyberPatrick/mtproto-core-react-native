@@ -1,4 +1,5 @@
 const pako = require('pako');
+const {TextDecoder} = require('text-encoding');
 const parserMap = require('../parser');
 const { intsToLong } = require('../../utils/common');
 

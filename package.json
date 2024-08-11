@@ -1,5 +1,5 @@
 {
-  "name": "@mtproto/core",
+  "name": "mtproto-react-native",
   "version": "6.3.0",
   "description": "Telegram API JS (MTProto) client library for Node.js and browser",
   "keywords": [
@@ -51,7 +51,8 @@
     "leemon": "6.2.0",
     "lodash.debounce": "4.0.8",
     "pako": "2.1.0",
-    "pbkdf2": "^3.1.2"
+    "pbkdf2": "^3.1.2",
+    "text-encoding": "^0.7.0"
   },
   "devDependencies": {
     "jest": "29.5.0",
