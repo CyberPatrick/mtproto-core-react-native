@@ -1,4 +1,5 @@
 const bigInt = require('big-integer');
+const {TextEncoder} = require('text-encoding')
 const Counter = require('../counter');
 const builderMap = require('../builder');
 
