@@ -61,7 +61,6 @@ function makeMTProto(envMethods) {
     'SHA256',
     'PBKDF2',
     'getRandomBytes',
-    'getLocalStorage',
     'createTransport',
   ];
 
@@ -89,8 +88,7 @@ function makeMTProto(envMethods) {
       this.rpcs = new Map();
       this.crypto = new Crypto(this.envMethods);
       this.storage = new Storage(
-        storageOptions,
-        this.envMethods.getLocalStorage
+        storageOptions
       );
       this.updates = new EventEmitter();
     }

@@ -1,13 +1,11 @@
-const crypto = require('crypto');
+const crypto = require('expo-crypto');
 
 async function SHA256(data) {
   data = new Uint8Array(data);
 
-  const hash = crypto.createHash('sha256');
+  const hash =  await crypto.digest(crypto.CryptoDigestAlgorithm.SHA256, data);
 
-  hash.update(data);
-
-  return new Uint8Array(hash.digest());
+  return new Uint8Array(hash);
 }
 
 module.exports = SHA256;

@@ -44,12 +44,14 @@
   "dependencies": {
     "aes-js": "3.1.2",
     "big-integer": "1.6.51",
-    "configstore": "5.0.1",
+    "configstore": "^5.0.1",
     "debug": "4.3.3",
     "events": "3.3.0",
+    "expo-crypto": "^13.0.2",
     "leemon": "6.2.0",
     "lodash.debounce": "4.0.8",
-    "pako": "2.1.0"
+    "pako": "2.1.0",
+    "pbkdf2": "^3.1.2"
   },
   "devDependencies": {
     "jest": "29.5.0",

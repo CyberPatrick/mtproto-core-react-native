@@ -1,99 +1,76 @@
-const net = require('net');
 const Obfuscated = require('../../src/transport/obfuscated');
-const baseDebug = require('../../src/utils/common/base-debug');
+
+const subdomainsMap = {
+  1: 'pluto',
+  2: 'venus',
+  3: 'aurora',
+  4: 'vesta',
+  5: 'flora',
+};
 
 class Transport extends Obfuscated {
   constructor(dc, crypto) {
     super();
 
     this.dc = dc;
-    this.debug = baseDebug.extend(`transport-${this.dc.id}`);
+    this.url = `wss://${subdomainsMap[this.dc.id]}.web.telegram.org${
+        this.dc.test ? '/apiws_test' : '/apiws'
+    }`;
     this.crypto = crypto;
 
     this.connect();
   }
 
   get isAvailable() {
-    return this.socket.writable;
+    return this.socket.readyState === WebSocket.OPEN;
   }
 
   connect() {
-    this.stream = new Uint8Array();
+    this.socket = new WebSocket(this.url, 'binary');
+    this.socket.binaryType = 'arraybuffer';
 
-    this.socket = net.connect(
-      this.dc.port,
-      this.dc.ip,
-      this.handleConnect.bind(this)
-    );
-
-    this.socket.on('data', this.handleData.bind(this));
-    this.socket.on('error', this.handleError.bind(this));
-    this.socket.on('close', this.handleClose.bind(this));
-
-    this.debug('connect');
+    this.socket.addEventListener('error', this.handleError.bind(this));
+    this.socket.addEventListener('open', this.handleOpen.bind(this));
+    this.socket.addEventListener('close', this.handleClose.bind(this));
+    this.socket.addEventListener('message', this.handleMessage.bind(this));
   }
 
-  async handleData(data) {
-    const bytes = new Uint8Array(data);
-
-    const deobfuscatedBytes = await this.deobfuscate(bytes);
-
-    this.stream = new Uint8Array([...this.stream, ...deobfuscatedBytes]);
-
-    // The minimum length is eight (transport error with a intermediate header)
-    while (this.stream.length >= 8) {
-      const dataView = new DataView(this.stream.buffer);
-      const payloadLength = dataView.getUint32(0, true);
-
-      if (payloadLength <= this.stream.length - 4) {
-        const payload = this.stream.slice(4, payloadLength + 4);
-
-        if (payloadLength === 4) {
-          const code = dataView.getInt32(4, true) * -1;
-
-          this.emit('error', {
-            type: 'transport',
-            code,
-          });
-        } else {
-          this.emit('message', payload.buffer);
-        }
-
-        this.stream = this.stream.slice(payloadLength + 4);
-      } else {
-        break;
-      }
-    }
-  }
-
-  async handleError(error) {
+  async handleError() {
     this.emit('error', {
       type: 'socket',
     });
   }
 
-  async handleClose(hadError) {
-    if (!this.socket.destroyed) {
-      this.socket.destroy();
+  async handleOpen() {
+    const initialMessage = await this.generateObfuscationKeys();
+    this.socket.send(initialMessage);
+
+    this.emit('open');
+  }
+
+  async handleClose() {
+    if (this.isAvailable) {
+      this.socket.close();
     }
 
     this.connect();
   }
 
-  async handleConnect() {
-    const initialMessage = await this.generateObfuscationKeys();
+  async handleMessage(event) {
+    const obfuscatedBytes = new Uint8Array(event.data);
+    const bytes = await this.deobfuscate(obfuscatedBytes);
 
-    this.socket.write(initialMessage);
+    const payload = this.getIntermediatePayload(bytes);
 
-    this.emit('open');
+    this.emit('message', payload.buffer);
   }
 
   async send(bytes) {
     const intermediateBytes = this.getIntermediateBytes(bytes);
 
-    const obfuscatedBytes = await this.obfuscate(intermediateBytes);
+    const { buffer } = await this.obfuscate(intermediateBytes);
 
-    this.socket.write(obfuscatedBytes);
+    this.socket.send(buffer);
   }
 }
 

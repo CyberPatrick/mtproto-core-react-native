@@ -1,3 +1,5 @@
+const pbkdf2 = require('pbkdf2')
+
 async function PBKDF2(password, salt, iterations) {
   return new Uint8Array(
     await crypto.subtle.deriveBits(
